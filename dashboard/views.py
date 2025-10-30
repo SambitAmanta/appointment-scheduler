@@ -159,4 +159,50 @@ class CustomerDashboardAPIView(APIView):
         return Response(payload)
 
 
+# CSV Export
+class DashboardExportAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        export_type = request.query_params.get('type', 'bookings')
+        date_from = request.query_params.get('from')
+        date_to = request.query_params.get('to')
+
+        try:
+            if date_from:
+                date_from_dt = datetime.fromisoformat(date_from)
+            else:
+                date_from_dt = datetime.now() - timedelta(days=30)
+
+            if date_to:
+                date_to_dt = datetime.fromisoformat(date_to)
+            else:
+                date_to_dt = datetime.now()
+        except Exception:
+            return Response({'detail': 'Invalid date format; use ISO format YYYY-MM-DD or full ISO'}, status=400)
+
+        if export_type == 'bookings':
+            qs = Appointment.objects.filter(created_at__gte=date_from_dt, created_at__lte=date_to_dt)
+            # permission: only admin can export all; provider can export their own; customer can export their own
+            user = request.user
+            if user.role == 'provider':
+                qs = qs.filter(provider=user)
+            elif user.role == 'customer':
+                qs = qs.filter(customer=user)
+            elif user.role != 'admin':
+                return Response({'detail': 'Forbidden'}, status=403)
+
+            # build CSV
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="bookings_{date_from_dt.date()}_{date_to_dt.date()}.csv"'
+            writer = csv.writer(response)
+            writer.writerow(['id','service','provider','customer','start_datetime','end_datetime','status','price','created_at'])
+            for a in qs.select_related('service','provider','customer'):
+                writer.writerow([
+                    a.id, a.service.name, a.provider.username, a.customer.username,
+                    a.start_datetime.isoformat(), a.end_datetime.isoformat(), a.status,
+                    getattr(a.service, 'price', ''), a.created_at.isoformat()
+                ])
+            return response
+
+        return Response({'detail': 'Unknown export type'}, status=400)
