@@ -144,3 +144,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'TZ_Asia/Kolkata'  # or UTC
 CELERY_BEAT_SCHEDULE = {}
+
+# EMAIL CONFIG (DEV)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'no-reply@appointmentsys.com'
