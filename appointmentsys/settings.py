@@ -158,3 +158,11 @@ CELERY_BEAT_SCHEDULE = {
 # EMAIL CONFIG (DEV)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'no-reply@appointmentsys.com'
+
+# env variables attach
+from decouple import config
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', cast=bool)
+CORS_ALLOWED_ORIGINS = [
+   "http://localhost:3000",
+]
