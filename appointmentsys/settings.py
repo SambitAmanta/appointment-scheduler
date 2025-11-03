@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'accounts',
     'services',
-    'appointments'
+    'appointments',
+    'appointments.apps.AppointmentsConfig'
 ]
 
 MIDDLEWARE = [
@@ -144,6 +145,15 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'TZ_Asia/Kolkata'  # or UTC
 CELERY_BEAT_SCHEDULE = {}
+
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+   'daily-reminder-8am': {
+     'task': 'notifications.tasks.daily_reminder',
+     'schedule': crontab(hour=8, minute=0),
+   },
+}
 
 # EMAIL CONFIG (DEV)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
